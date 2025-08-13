@@ -19,9 +19,9 @@ const productSchema = new mongoose.Schema({
         default: true
     },
     category: {
-        type: String,
-        required: true,
-        enum: ['Electronics', 'Books', 'Appliances']
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        required: true
     }
 }, {
     timestamps: true

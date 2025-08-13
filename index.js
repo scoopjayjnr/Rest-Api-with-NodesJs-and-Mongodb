@@ -1,6 +1,5 @@
 const express = require("express")
 const mongoose = require("mongoose")
-const Product = require("./models/Product")
 
 const app = express()
 
@@ -18,3 +17,4 @@ mongoose.connection.on('error', (error) => {
 })
 
 app.use(require('./routes/productsRoute'))
+app.use(require('./routes/categoriesRoute'))
