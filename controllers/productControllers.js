@@ -1,5 +1,7 @@
 const mongoose = require('mongoose')
 const Product = require("../models/Product")
+const Category = require('../models/Category')
+const { request, response } = require('express')
 
 exports.createProduct = async (request, response) => {
     try {
@@ -13,8 +15,8 @@ exports.createProduct = async (request, response) => {
 
         if(!request.body.category){
             return response.status(422).json({ error: 'Category field required'})
-        } else if (!Product.schema.path('category').enumValues.includes(request.body.category)) {
-            return response.status(422).json({ error: `Category must be one of these options: ${Product.schema.path('category').enumValues.join(', ')}`})
+        } else if (!await Category.findById(request.body.category)) {
+            return response.status(422).json({ error: `Category mot Found`})
         }
 
         const newProduct = await Product.create(request.body)
@@ -26,7 +28,7 @@ exports.createProduct = async (request, response) => {
 
 exports.getAllProducts = async (request, response) => {
     try{
-        const products = await Product.find().select('-__v')
+        const products = await Product.find().select('-__v').populate({ path: 'category', select: '_id name'})
         return response.status(200).json(products)
     } catch (error) {
         return response.status(500).json({ error: error.message})
@@ -39,12 +41,26 @@ exports.getProductsById = async (request, response) => {
             return response.status(422).json({error: 'Parameter not a Valid id'})
         }
 
-        const product = await Product.findById(request.params.id).select('-__v')
+        const product = await Product.findById(request.params.id).select('-__v').populate({ path: 'category', select: '_id name'})
         if (!product) {
             return response.status(404).json({ error: 'Product Not Found'})
         }
         return response.status(200).json(product)
     }catch (error) {
+        return response.status(500).json({ error: error.message})
+    }
+}
+
+exports.getProductsByCategory = async (request, response) => {
+    try{
+        if(!await Category.findById(request.params.categoryId)) {
+            return response.status(404).json({ error: 'Category Not Found'})
+        }
+
+        const products = await Product.find({ category: request.params.categoryId}).select('-__v').populate({ path: 'category', select: '_id name'})
+
+        return response.status(200).json({ error: error.message})
+    } catch (error){
         return response.status(500).json({ error: error.message})
     }
 }

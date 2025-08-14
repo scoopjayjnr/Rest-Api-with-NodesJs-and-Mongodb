@@ -1,10 +1,15 @@
 const mongoose = require('mongoose')
 const Category = require("../models/Category")
+const Product = require('../models/Product')
 
 exports.createCategory = async (request, response) => {
     try {
         if(!request.body.name){
             return response.status(422).json({ error: 'Name field required'})
+        }
+
+        if (await Category.findOne({ name: request.body.name})) {
+            return response.status(409).json({ error: `The category ${request.body.name} already exists`})
         }
 
         const newCategory = await Category.create(request.body)
@@ -16,8 +21,8 @@ exports.createCategory = async (request, response) => {
 
 exports.getAllCategories = async (request, response) => {
     try{
-        const products = await Category.find().select('-__v')
-        return response.status(200).json(Categories)
+        const categories = await Category.find().select('-__v')
+        return response.status(200).json(categories)
     } catch (error) {
         return response.status(500).json({ error: error.message})
     }
@@ -51,6 +56,11 @@ exports.deleteCategoryById = async (request, response) => {
         if(!category){
             return response.status(404).json({ error: 'Category Not Found'})
         }else{
+            const productCount = await Product.countDocuments({ category: category._id})
+
+            if (productCount > 0) {
+                return response.status(409).json({ error: `Category ${category.name} is being use in ${productCount} products(s)`})
+            }
             await product.deleteOne()
         }
 
